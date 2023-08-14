@@ -8,7 +8,7 @@ import 'package:task_manager_flutter/data/utils/api_links.dart';
 import 'package:task_manager_flutter/ui/screens/add_task_screen.dart';
 import 'package:task_manager_flutter/ui/screens/update_profile.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
-import 'package:task_manager_flutter/ui/widgets/status_change_botom_sheet.dart';
+import 'package:task_manager_flutter/ui/widgets/status_change_bottom_sheet.dart';
 import 'package:task_manager_flutter/ui/widgets/summery_card.dart';
 import 'package:task_manager_flutter/ui/widgets/task_card.dart';
 import 'package:task_manager_flutter/ui/widgets/user_banners.dart';
@@ -236,7 +236,7 @@ class _TaskScreenState extends State<TaskScreen> {
                                 status: _taskModel.data![index].status ?? "NEW",
                                 chipColor: _getChipColor(),
                                 onChangeStatusPressed: () {
-                                  statusUpdateButtomSheet(
+                                  statusUpdateBottomSheet(
                                       _taskModel.data![index]);
                                 },
                                 onEditPressed: () {},
@@ -278,7 +278,7 @@ class _TaskScreenState extends State<TaskScreen> {
     }
   }
 
-  void statusUpdateButtomSheet(TaskData task) {
+  void statusUpdateBottomSheet(TaskData task) {
     showModalBottomSheet(
       shape: ShapeBorder.lerp(
           RoundedRectangleBorder(

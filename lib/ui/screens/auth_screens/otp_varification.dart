@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
-import 'package:task_manager_flutter/ui/screens/auth_screens/login_screen.dart';
+import 'package:task_manager_flutter/state_management/otp_verification_controller.dart';
 import 'package:task_manager_flutter/ui/screens/auth_screens/reset_screen.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 import 'package:task_manager_flutter/ui/widgets/signup_button.dart';
+
+import 'login_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({
@@ -22,49 +22,11 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController _otpTEController = TextEditingController();
-  bool _isLoading = false;
   final GlobalKey<FormState> _otpFormKey = GlobalKey<FormState>();
-
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  Future<void> otpVerify() async {
-    _isLoading = true;
-    setState(() {});
-
-    NetworkResponse response = await NetworkCaller().getRequest(
-        ApiLinks.recoverVerifyOTP(widget.email, _otpTEController.text.trim()));
-
-    _isLoading = false;
-    setState(() {});
-    final BuildContext context = this.context;
-    if (response.statusCode == 200 && response.body?['status'] == 'success') {
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResetPasswordScreen(
-              email: widget.email,
-              otp: _otpTEController.text.trim(),
-            ),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please enter valid OTP"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       body: ScreenBackground(
         child: SingleChildScrollView(
           child: Padding(
@@ -112,25 +74,36 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     ),
                   ),
                 ),
-                _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : CustomButton(
-                        onPresse: () {
-                          otpVerify();
-                        },
-                      ),
+                GetBuilder<OtpVerificationController>(
+                    builder: (otpVerificationController) {
+                  return Visibility(
+                    visible: otpVerificationController.isLoading == false,
+                    replacement: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    child: CustomButton(
+                      onPresse: () {
+                        otpVerificationController
+                            .otpVerify(
+                                widget.email, _otpTEController.text.trim())
+                            .then((results) {
+                          if (results == true) {
+                            Get.off(ResetPasswordScreen(
+                                email: widget.email,
+                                otp: _otpTEController.text.trim()));
+                          }
+                        });
+                      },
+                    ),
+                  );
+                }),
                 const SizedBox(
                   height: 16,
                 ),
                 SignUpButton(
                   text: "Have An Account?",
                   onPresse: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()));
+                    Get.to(const LoginScreen());
                   },
                   buttonText: 'Login',
                 ),

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
-
+import 'package:get/get.dart';
+import 'package:task_manager_flutter/state_management/reset_pass_controller.dart';
 import 'package:task_manager_flutter/ui/screens/auth_screens/login_screen.dart';
+import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_password_text_field.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 
@@ -25,44 +24,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final TextEditingController _passwordTEController = TextEditingController();
   final TextEditingController _confirmPasswordTEController =
       TextEditingController();
-  bool _isLoading = false;
   final GlobalKey<FormState> _resetFormKey = GlobalKey<FormState>();
-
-  Future<void> resetPassword() async {
-    _isLoading = true;
-    if (mounted) {
-      setState(() {});
-    }
-
-    Map<String, dynamic> resetForm = {
-      'email': widget.email,
-      'otp': widget.otp,
-      'password': _passwordTEController.text,
-    };
-    NetworkResponse response = await NetworkCaller()
-        .postRequest(ApiLinks.recoverResetPassword, resetForm);
-    _isLoading = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false);
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please enter valid password"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,35 +80,36 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 const SizedBox(
                   height: 16,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: Visibility(
-                    visible: _isLoading == false,
+                GetBuilder<ResetPasswordController>(
+                    builder: (resetPasswordController) {
+                  return Visibility(
+                    visible: resetPasswordController.isLoading == false,
                     replacement: const Center(
                       child: CircularProgressIndicator(),
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
+                    child: CustomButton(
+                      onPresse: () {
                         if (_resetFormKey.currentState!.validate() &&
                             _passwordTEController.text ==
                                 _confirmPasswordTEController.text) {
-                          resetPassword();
+                          resetPasswordController
+                              .resetPassword(widget.email, widget.otp,
+                                  _passwordTEController.text)
+                              .then((results) {
+                            if (results == true) {
+                              Get.offAll(const LoginScreen());
+                            } else {
+                              Get.snackbar("Error", "Password reset failed");
+                            }
+                          });
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("please enter valid password"),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          Get.snackbar(
+                              "Failed", "Please enter correct password");
                         }
                       },
-                      child: const Icon(
-                        Icons.arrow_circle_right_outlined,
-                        size: 20,
-                      ),
                     ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(
                   height: 20,
                 ),

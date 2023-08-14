@@ -50,6 +50,7 @@ class _CustomPasswordTextFormFieldState
       decoration: InputDecoration(
         fillColor: Colors.white,
         hintText: widget.hintText,
+        hintStyle: const TextStyle(color: Colors.green),
         filled: true,
         border: const OutlineInputBorder(borderSide: BorderSide.none),
         suffixIcon: GestureDetector(

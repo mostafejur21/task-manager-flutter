@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
-import 'package:task_manager_flutter/ui/screens/auth_screens/login_screen.dart';
+import 'package:get/get.dart';
+import 'package:task_manager_flutter/state_management/signup_form_controller.dart';
+import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_text_form_field.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 
@@ -25,52 +24,6 @@ class _SignUpFormScreenState extends State<SignUpFormScreen> {
   final TextEditingController _passwordController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  bool _signUpInProgress = false;
-
-  Future<void> userSignUp() async {
-    _signUpInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    Map<String, dynamic> requestBody = {
-      "email": _emailController.text.trim(),
-      "firstName": _firstNameController.text.trim(),
-      "lastName": _lastNameController.text.trim(),
-      "phoneNumber": _phoneNumberController.text.trim(),
-      "password": _passwordController.text,
-      "photos": ""
-    };
-
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(ApiLinks.regestration, requestBody);
-    _signUpInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      _emailController.clear();
-      _firstNameController.clear();
-      _lastNameController.clear();
-      _phoneNumberController.clear();
-      _passwordController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registration Successful"),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registration Failed"),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,26 +119,40 @@ class _SignUpFormScreenState extends State<SignUpFormScreen> {
                   obscureText: true,
                 ),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: Visibility(
-                    visible: _signUpInProgress == false,
+                GetBuilder<SignupController>(builder: (signupController) {
+                  return Visibility(
+                    visible: signupController.signUpInProgress == false,
                     replacement: const Center(
                       child: CircularProgressIndicator(),
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
+                    child: CustomButton(
+                      onPresse: () {
                         if (_formKey.currentState!.validate()) {
-                          userSignUp();
+                          signupController
+                              .userSignUp(
+                                  _emailController.text.trim(),
+                                  _firstNameController.text.trim(),
+                                  _lastNameController.text.trim(),
+                                  _phoneNumberController.text.trim(),
+                                  _passwordController.text)
+                              .then((results) {
+                            if (results == true) {
+                              _emailController.clear();
+                              _firstNameController.clear();
+                              _lastNameController.clear();
+                              _phoneNumberController.clear();
+                              _passwordController.clear();
+                              Get.snackbar(
+                                  "Success", "Registration Successful");
+                            } else {
+                              Get.snackbar("Failed", "Registration Failed");
+                            }
+                          });
                         }
                       },
-                      child: const Icon(
-                        Icons.arrow_circle_right_outlined,
-                        size: 20,
-                      ),
                     ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(
                   height: 20,
                 ),
@@ -201,10 +168,7 @@ class _SignUpFormScreenState extends State<SignUpFormScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const LoginScreen()));
+                        Get.back();
                       },
                       child: const Text(
                         "Login",

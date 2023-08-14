@@ -1,58 +1,28 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
-import 'package:task_manager_flutter/ui/screens/auth_screens/otp_varification.dart';
+import 'package:get/get.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_text_form_field.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 import 'package:task_manager_flutter/ui/widgets/signup_button.dart';
 
-class EmailVarificationScreeen extends StatefulWidget {
-  const EmailVarificationScreeen({Key? key}) : super(key: key);
+import '../../../state_management/email_verification_controller.dart';
+import '../../widgets/custom_button.dart';
+import 'otp_varification.dart';
+
+class EmailVerificationScreen extends StatefulWidget {
+  const EmailVerificationScreen({Key? key}) : super(key: key);
 
   @override
-  State<EmailVarificationScreeen> createState() =>
-      _EmailVarificationScreeenState();
+  State<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _EmailVarificationScreeenState extends State<EmailVarificationScreeen> {
+class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   final TextEditingController _emailTEController = TextEditingController();
-  bool _isLoading = false;
   final GlobalKey<FormState> _emailFormKey = GlobalKey<FormState>();
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  Future<void> emailVerify(String email) async {
-    _isLoading = true;
-    if (mounted) {
-      setState(() {});
-    }
-
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(ApiLinks.recoverVerifyEmail(email));
-
-    _isLoading = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => OtpVerificationScreen(
-                    email: _emailTEController.text.trim(),
-                  )));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please enter valid email address"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 
   @override
   dispose() {
@@ -106,35 +76,39 @@ class _EmailVarificationScreeenState extends State<EmailVarificationScreeen> {
                       textInputType: TextInputType.emailAddress,
                     )),
                 const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: Visibility(
-                    visible: _isLoading == false,
+                GetBuilder<EmailVerificationController>(
+                    builder: (emailVerificationController) {
+                  return Visibility(
+                    visible: emailVerificationController.isLoading == false,
                     replacement: const Center(
                       child: CircularProgressIndicator(),
                     ),
-                    child: ElevatedButton(
-                      onPressed: () {
+                    child: CustomButton(
+                      onPresse: () {
                         if (_emailFormKey.currentState!.validate()) {
-                          emailVerify(_emailTEController.text.trim());
+                          emailVerificationController
+                              .emailVerify(_emailTEController.text.trim())
+                              .then((results) {
+                            if (results == true) {
+                              Get.to(OtpVerificationScreen(
+                                email: _emailTEController.text.trim(),
+                              ));
+                            }
+                          });
                         }
                       },
-                      child: const Icon(
-                        Icons.arrow_circle_right_outlined,
-                        size: 20,
-                      ),
                     ),
-                  ),
-                ),
+                  );
+                }),
                 const SizedBox(
                   height: 20,
                 ),
                 SignUpButton(
                   text: "Have An Account?",
                   onPresse: () {
-                    Navigator.pop(context);
+                    Get.back();
                   },
-                  buttonText: 'Sign In',
+                  buttonText: 'Login',
                 ),
               ],
             ),

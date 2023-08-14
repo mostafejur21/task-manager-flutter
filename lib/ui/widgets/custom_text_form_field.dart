@@ -39,10 +39,10 @@ class CustomTextFormField extends StatelessWidget {
       decoration: InputDecoration(
         fillColor: Colors.white,
         hintText: hintText,
+        hintStyle: const TextStyle(color: Colors.green),
         filled: true,
         border: const OutlineInputBorder(borderSide: BorderSide.none),
       ),
-      
     );
   }
 }
