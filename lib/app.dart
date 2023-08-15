@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task_manager_flutter/state_management/controller_bindings.dart';
+import 'package:task_manager_flutter/controller_bindings/controller_bindings.dart';
 import 'package:task_manager_flutter/ui/screens/splash_screens.dart';
 
 class TaskManagerApp extends StatelessWidget {

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
-import 'package:task_manager_flutter/ui/screens/update_profile.dart';
+import 'package:get/get.dart';
+import 'package:task_manager_flutter/state_management/add_task_controller.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_text_form_field.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 import 'package:task_manager_flutter/ui/widgets/user_banners.dart';
+
+import 'update_profile.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -20,44 +20,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   final TextEditingController _taskDescriptionController =
       TextEditingController();
-  bool _addNewTaskLoading = false;
-
-  Future<void> addNewTask() async {
-    _addNewTaskLoading = true;
-    if (mounted) {
-      setState(() {});
-    }
-    Map<String, dynamic> requestBody = {
-      "title": _taskNameController.text.trim(),
-      "description": _taskDescriptionController.text.trim(),
-      "status": "New",
-    };
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(ApiLinks.createTask, requestBody);
-    _addNewTaskLoading = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      _taskNameController.clear();
-      _taskDescriptionController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Task Added Successfully"),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Task Added Failed"),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,16 +80,31 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                     const SizedBox(
                       height: 16,
                     ),
-                    Visibility(
-                        visible: _addNewTaskLoading == false,
-                        replacement: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        child: CustomButton(
-                          onPresse: () {
-                            addNewTask();
-                          },
-                        )),
+                    GetBuilder<AddTaskController>(builder: (addTaskController) {
+                      return Visibility(
+                          visible: addTaskController.addNewTaskLoading == false,
+                          replacement: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                          child: CustomButton(
+                            onPresse: () {
+                              addTaskController
+                                  .addNewTask(_taskNameController.text.trim(),
+                                      _taskDescriptionController.text.trim())
+                                  .then((value) {
+                                if (value == true) {
+                                  _taskNameController.clear();
+                                  _taskDescriptionController.clear();
+                                  Get.snackbar(
+                                      "Success", "New Task added successfully");
+                                } else {
+                                  Get.snackbar(
+                                      "Failed", "New Task added failed");
+                                }
+                              });
+                            },
+                          ));
+                    }),
                   ],
                 )),
           ],
