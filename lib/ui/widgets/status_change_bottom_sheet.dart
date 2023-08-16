@@ -2,10 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
 import 'package:task_manager_flutter/data/models/task_model.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
 import 'package:task_manager_flutter/state_management/update_status_controller.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 
