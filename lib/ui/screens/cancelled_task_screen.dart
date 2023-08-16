@@ -10,6 +10,7 @@ class CancelledTaskScreen extends StatelessWidget {
     return TaskScreen(
       apiLink: ApiLinks.cancelledTaskStatus,
       screenStatus: "Cancelled",
+      floatingActionButton: false,
     );
   }
 }

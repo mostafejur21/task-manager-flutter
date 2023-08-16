@@ -10,6 +10,7 @@ class ProgressTaskScreen extends StatelessWidget {
     return TaskScreen(
       apiLink: ApiLinks.inProgressTaskStatus,
       screenStatus: 'In Progress',
+      floatingActionButton: false,
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:get/get.dart';
 import 'package:task_manager_flutter/data/models/auth_utility.dart';
 import 'package:task_manager_flutter/ui/screens/auth_screens/login_screen.dart';
 
@@ -12,30 +13,24 @@ AppBar userBanner(context, {VoidCallback? onTapped}) {
       IconButton(
         icon: const Icon(FontAwesomeIcons.powerOff),
         onPressed: () {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  title: const Text("Are you sure you want to logout?"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("No")),
-                    TextButton(
-                        onPressed: () {
-                          AuthUtility.clearUserInfo();
-                          Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const LoginScreen()),
-                              (route) => false);
-                        },
-                        child: const Text("Yes")),
-                  ],
-                );
-              });
+          Get.defaultDialog(
+              title: "Logout",
+              content: const Text("Are you sure you want to logout?"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    AuthUtility.clearUserInfo();
+                    Get.offAll(() => const LoginScreen());
+                  },
+                  child: const Text("Yes"),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Get.back();
+                  },
+                  child: const Text("No"),
+                ),
+              ]);
         },
       ),
     ],

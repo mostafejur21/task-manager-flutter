@@ -7,6 +7,7 @@ import 'package:task_manager_flutter/state_management/reset_pass_controller.dart
 import 'package:task_manager_flutter/state_management/signup_form_controller.dart';
 import 'package:task_manager_flutter/state_management/task_controller.dart';
 import 'package:task_manager_flutter/state_management/update_profile_controller.dart';
+import 'package:task_manager_flutter/state_management/update_status_controller.dart';
 
 class ControllerBinding extends Bindings {
   @override
@@ -20,5 +21,6 @@ class ControllerBinding extends Bindings {
     Get.put<AddTaskController>(AddTaskController());
     Get.put<TaskController>(TaskController());
     Get.put<UpdateProfiController>(UpdateProfiController());
+    Get.put<UpdateStatusController>(UpdateStatusController());
   }
 }

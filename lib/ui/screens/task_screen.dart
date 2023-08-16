@@ -1,11 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/models/summery_count_model.dart';
 import 'package:task_manager_flutter/data/models/task_model.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
 import 'package:task_manager_flutter/state_management/task_controller.dart';
 import 'package:task_manager_flutter/ui/screens/add_task_screen.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
@@ -35,101 +31,14 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> {
+  TaskController taskController = Get.find<TaskController>();
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       taskController.getTask(widget.apiLink);
-      statusCount();
+      taskController.statusCount();
     });
-  }
-
-  TaskListModel _taskModel = TaskListModel();
-  bool isLoading = false;
-
-  Future<void> getTask() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-    }
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(widget.apiLink);
-    if (response.isSuccess) {
-      _taskModel = TaskListModel.fromJson(response.body!);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to load data!"),
-          ),
-        );
-      }
-    }
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  TaskController taskController = Get.find();
-  StatusCountModel statusCountModel = StatusCountModel();
-  int count1 = 0;
-  int count2 = 0;
-  int count3 = 0;
-  int count4 = 0;
-
-  Future<void> statusCount() async {
-    isLoading = true;
-    if (mounted) {
-      setState(() {});
-    }
-    final NetworkResponse newTaskResponse =
-        await NetworkCaller().getRequest(ApiLinks.newTaskStatus);
-    TaskListModel newTaskModel = TaskListModel.fromJson(newTaskResponse.body!);
-
-    if (mounted) {
-      setState(() {
-        count1 = newTaskModel.data?.length ?? 0;
-      });
-    }
-
-    final cancelledTaskResponse =
-        await NetworkCaller().getRequest(ApiLinks.cancelledTaskStatus);
-    TaskListModel cancelledTaskModel =
-        TaskListModel.fromJson(cancelledTaskResponse.body!);
-    if (mounted) {
-      setState(() {
-        count2 = cancelledTaskModel.data?.length ?? 0;
-      });
-    }
-
-    final completedTaskResponse =
-        await NetworkCaller().getRequest(ApiLinks.completedTaskStatus);
-
-    TaskListModel completedTaskModel =
-        TaskListModel.fromJson(completedTaskResponse.body!);
-    if (mounted) {
-      setState(() {
-        count3 = completedTaskModel.data?.length ?? 0;
-      });
-    }
-
-    final inProgressResponse =
-        await NetworkCaller().getRequest(ApiLinks.inProgressTaskStatus);
-    TaskListModel inProgressTaskModel =
-        TaskListModel.fromJson(inProgressResponse.body!);
-    if (mounted) {
-      setState(() {
-        count4 = inProgressTaskModel.data?.length ?? 0;
-      });
-    }
-
-    isLoading = false;
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   // int getCountForStatus(String status) {
@@ -146,113 +55,112 @@ class _TaskScreenState extends State<TaskScreen> {
       appBar: userBanner(
         context,
         onTapped: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const UpdateProfileScreen()));
+          Get.to(() => const UpdateProfileScreen());
         },
       ),
       body: ScreenBackground(
-        child: Column(
-          children: [
-            if (widget.showAllSummeryCard)
-              Padding(
+        child: GetBuilder<TaskController>(builder: (_) {
+          return Column(
+            children: [
+              if (widget.showAllSummeryCard)
+                Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Visibility(
+                      visible: taskController.isLoading == false,
+                      replacement: const Center(
+                        child: LinearProgressIndicator(),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: SummeryCard(
+                              numberOfTasks: taskController.count1,
+                              title: "New",
+                            ),
+                          ),
+                          Expanded(
+                            child: SummeryCard(
+                              numberOfTasks: taskController.count3,
+                              title: "Completed",
+                            ),
+                          ),
+                          Expanded(
+                            child: SummeryCard(
+                              numberOfTasks: taskController.count2,
+                              title: "Cancelled",
+                            ),
+                          ),
+                          Expanded(
+                            child: SummeryCard(
+                              numberOfTasks: taskController.count4,
+                              title: "Progress",
+                            ),
+                          ),
+                        ],
+                      ),
+                    )),
+              Expanded(
+                child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Visibility(
-                    visible: isLoading == false,
-                    replacement: const Center(
-                      child: LinearProgressIndicator(),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: SummeryCard(
-                            numberOfTasks: count1,
-                            title: "New",
-                          ),
-                        ),
-                        Expanded(
-                          child: SummeryCard(
-                            numberOfTasks: count3,
-                            title: "Completed",
-                          ),
-                        ),
-                        Expanded(
-                          child: SummeryCard(
-                            numberOfTasks: count2,
-                            title: "Cancelled",
-                          ),
-                        ),
-                        Expanded(
-                          child: SummeryCard(
-                            numberOfTasks: count4,
-                            title: "Progress",
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: RefreshIndicator(
+                  child: RefreshIndicator(
                     onRefresh: () async {
                       taskController.getTask(widget.apiLink);
-                      statusCount();
+                      taskController.statusCount();
                     },
                     child: Visibility(
-                      visible: isLoading == false,
+                      visible: taskController.isLoading == false,
                       replacement: const Center(
                         child: CircularProgressIndicator(),
                       ),
                       child: ListView.builder(
-                          itemCount: _taskModel.data?.length ?? 0,
+                          itemCount: taskController.taskModel.data?.length ?? 0,
                           itemBuilder: (context, int index) {
-                            return GetBuilder<TaskController>(
-                                builder: (taskController) {
-                              return CustomTaskCard(
-                                  title: taskController
-                                          .taskModel.data![index].title ??
-                                      "Unknown",
-                                  description: taskController
-                                          .taskModel.data![index].description ??
-                                      "",
-                                  createdDate: taskController
-                                          .taskModel.data![index].createdDate ??
-                                      "",
-                                  status: taskController
-                                          .taskModel.data![index].status ??
-                                      "NEW",
-                                  chipColor: _getChipColor(),
-                                  onChangeStatusPressed: () {
-                                    statusUpdateBottomSheet(
-                                        taskController.taskModel.data![index]);
-                                  },
-                                  onEditPressed: () {},
-                                  onDeletePressed: () {
-                                    Get.defaultDialog(
-                                      title: "delete task?",
-                                      middleText:
-                                          "Are you sure you want to delete this task?",
-                                      textConfirm: "Yes",
-                                      textCancel: "No",
-                                      onCancel: () {
-                                        Get.back();
-                                      },
-                                      onConfirm: () {
-                                        taskController.deleteTask(taskController
-                                            .taskModel.data![index].sId!);
-                                        Get.back();
-                                      },
-                                    );
-                                  });
-                            });
+                            return CustomTaskCard(
+                                title: taskController
+                                        .taskModel.data![index].title ??
+                                    "Unknown",
+                                description: taskController
+                                        .taskModel.data![index].description ??
+                                    "",
+                                createdDate: taskController
+                                        .taskModel.data![index].createdDate ??
+                                    "",
+                                status: taskController
+                                        .taskModel.data![index].status ??
+                                    "NEW",
+                                chipColor: _getChipColor(),
+                                onChangeStatusPressed: () {
+                                  statusUpdateBottomSheet(
+                                      taskController.taskModel.data![index]);
+                                },
+                                onEditPressed: () {},
+                                onDeletePressed: () {
+                                  Get.defaultDialog(
+                                    title: "delete task?",
+                                    middleText:
+                                        "Are you sure you want to delete this task?",
+                                    textConfirm: "Yes",
+                                    textCancel: "No",
+                                    onCancel: () {
+                                      Get.back();
+                                    },
+                                    onConfirm: () {
+                                      taskController.deleteTask(taskController
+                                          .taskModel.data![index].sId!);
+                                      Get.back();
+                                      taskController.getTask(widget.apiLink);
+                                      taskController.statusCount();
+                                    },
+                                  );
+                                });
                           }),
-                    )),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
       floatingActionButton: Visibility(
         visible: widget.floatingActionButton == true,
@@ -296,7 +204,8 @@ class _TaskScreenState extends State<TaskScreen> {
         return UpdateStatus(
           task: task,
           onTaskComplete: () {
-            getTask();
+            taskController.getTask(widget.apiLink);
+            taskController.statusCount();
           },
         );
       },

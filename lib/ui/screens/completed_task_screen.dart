@@ -10,6 +10,7 @@ class CompleteTaskScreen extends StatelessWidget {
     return TaskScreen(
       apiLink: ApiLinks.completedTaskStatus,
       screenStatus: 'Completed',
+      floatingActionButton: false,
     );
   }
 }
