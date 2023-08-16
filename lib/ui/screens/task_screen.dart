@@ -6,6 +6,7 @@ import 'package:task_manager_flutter/data/models/summery_count_model.dart';
 import 'package:task_manager_flutter/data/models/task_model.dart';
 import 'package:task_manager_flutter/data/services/network_caller.dart';
 import 'package:task_manager_flutter/data/utils/api_links.dart';
+import 'package:task_manager_flutter/state_management/task_controller.dart';
 import 'package:task_manager_flutter/ui/screens/add_task_screen.dart';
 import 'package:task_manager_flutter/ui/widgets/screen_background.dart';
 import 'package:task_manager_flutter/ui/widgets/status_change_bottom_sheet.dart';
@@ -38,7 +39,7 @@ class _TaskScreenState extends State<TaskScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      getTask();
+      taskController.getTask(widget.apiLink);
       statusCount();
     });
   }
@@ -72,6 +73,7 @@ class _TaskScreenState extends State<TaskScreen> {
     }
   }
 
+  TaskController taskController = Get.find();
   StatusCountModel statusCountModel = StatusCountModel();
   int count1 = 0;
   int count2 = 0;
@@ -127,28 +129,6 @@ class _TaskScreenState extends State<TaskScreen> {
     isLoading = false;
     if (mounted) {
       setState(() {});
-    }
-  }
-
-  Future<void> deleteTask(String taskId) async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-    }
-    final NetworkResponse response =
-        await NetworkCaller().getRequest(ApiLinks.deleteTask(taskId));
-    if (response.isSuccess) {
-      _taskModel.data!.removeWhere((element) => element.sId == taskId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Task Deleted Successfully!")));
-      }
-    }
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
@@ -217,7 +197,7 @@ class _TaskScreenState extends State<TaskScreen> {
                 padding: const EdgeInsets.all(8),
                 child: RefreshIndicator(
                     onRefresh: () async {
-                      getTask();
+                      taskController.getTask(widget.apiLink);
                       statusCount();
                     },
                     child: Visibility(
@@ -228,23 +208,45 @@ class _TaskScreenState extends State<TaskScreen> {
                       child: ListView.builder(
                           itemCount: _taskModel.data?.length ?? 0,
                           itemBuilder: (context, int index) {
-                            return CustomTaskCard(
-                                title:
-                                    _taskModel.data![index].title ?? "Unknown",
-                                description:
-                                    _taskModel.data![index].description ?? "",
-                                createdDate:
-                                    _taskModel.data![index].createdDate ?? "",
-                                status: _taskModel.data![index].status ?? "NEW",
-                                chipColor: _getChipColor(),
-                                onChangeStatusPressed: () {
-                                  statusUpdateBottomSheet(
-                                      _taskModel.data![index]);
-                                },
-                                onEditPressed: () {},
-                                onDeletePressed: () {
-                                  deleteTask(_taskModel.data![index].sId!);
-                                });
+                            return GetBuilder<TaskController>(
+                                builder: (taskController) {
+                              return CustomTaskCard(
+                                  title: taskController
+                                          .taskModel.data![index].title ??
+                                      "Unknown",
+                                  description: taskController
+                                          .taskModel.data![index].description ??
+                                      "",
+                                  createdDate: taskController
+                                          .taskModel.data![index].createdDate ??
+                                      "",
+                                  status: taskController
+                                          .taskModel.data![index].status ??
+                                      "NEW",
+                                  chipColor: _getChipColor(),
+                                  onChangeStatusPressed: () {
+                                    statusUpdateBottomSheet(
+                                        taskController.taskModel.data![index]);
+                                  },
+                                  onEditPressed: () {},
+                                  onDeletePressed: () {
+                                    Get.defaultDialog(
+                                      title: "delete task?",
+                                      middleText:
+                                          "Are you sure you want to delete this task?",
+                                      textConfirm: "Yes",
+                                      textCancel: "No",
+                                      onCancel: () {
+                                        Get.back();
+                                      },
+                                      onConfirm: () {
+                                        taskController.deleteTask(taskController
+                                            .taskModel.data![index].sId!);
+                                        Get.back();
+                                      },
+                                    );
+                                  });
+                            });
                           }),
                     )),
               ),

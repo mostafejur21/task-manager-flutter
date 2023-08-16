@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:task_manager_flutter/data/models/auth_utility.dart';
 import 'package:task_manager_flutter/data/models/network_response.dart';
 import 'package:task_manager_flutter/data/services/network_caller.dart';
 import 'package:task_manager_flutter/data/utils/api_links.dart';
+import 'package:task_manager_flutter/state_management/update_profile_controller.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_button.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_password_text_field.dart';
 import 'package:task_manager_flutter/ui/widgets/custom_text_form_field.dart';
@@ -46,49 +48,49 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
     _phoneNumberController.text = AuthUtility.userInfo.data?.mobile ?? "";
   }
 
-  Future<void> updateProfile() async {
-    _signUpInProgress = true;
-    if (mounted) {
-      setState(() {});
-    }
-    Map<String, dynamic> requestBody = {
-      "email": _emailController.text.trim(),
-      "firstName": _firstNameController.text.trim(),
-      "lastName": _lastNameController.text.trim(),
-      "phoneNumber": _phoneNumberController.text.trim(),
-      "photos": ""
-    };
-    if (_passwordController.text.isNotEmpty) {
-      requestBody["password"] = _passwordController.text;
-    }
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(ApiLinks.profileUpdate, requestBody);
-    _signUpInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      userInfo.firstName = _firstNameController.text.trim();
-      userInfo.lastName = _lastNameController.text.trim();
-      userInfo.mobile = _phoneNumberController.text.trim();
-      _passwordController.clear();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profile update Successful"),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profile update Failed"),
-          ),
-        );
-      }
-    }
-  }
+  // Future<void> updateProfile() async {
+  //   _signUpInProgress = true;
+  //   if (mounted) {
+  //     setState(() {});
+  //   }
+  //   Map<String, dynamic> requestBody = {
+  //     "email": _emailController.text.trim(),
+  //     "firstName": _firstNameController.text.trim(),
+  //     "lastName": _lastNameController.text.trim(),
+  //     "phoneNumber": _phoneNumberController.text.trim(),
+  //     "photos": ""
+  //   };
+  //   if (_passwordController.text.isNotEmpty) {
+  //     requestBody["password"] = _passwordController.text;
+  //   }
+  //   final NetworkResponse response =
+  //       await NetworkCaller().postRequest(ApiLinks.profileUpdate, requestBody);
+  //   _signUpInProgress = false;
+  //   if (mounted) {
+  //     setState(() {});
+  //   }
+  //   if (response.isSuccess) {
+  //     userInfo.firstName = _firstNameController.text.trim();
+  //     userInfo.lastName = _lastNameController.text.trim();
+  //     userInfo.mobile = _phoneNumberController.text.trim();
+  //     _passwordController.clear();
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text("Profile update Successful"),
+  //         ),
+  //       );
+  //     }
+  //   } else {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(
+  //           content: Text("Profile update Failed"),
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -224,16 +226,38 @@ class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
                 const SizedBox(
                   height: 16,
                 ),
-                Visibility(
-                  visible: _signUpInProgress == false,
-                  replacement:
-                      const Center(child: CupertinoActivityIndicator()),
-                  child: CustomButton(
-                    onPresse: () {
-                      updateProfile();
-                    },
-                  ),
-                ),
+                GetBuilder<UpdateProfiController>(
+                    builder: (updateProfileScreen) {
+                  return Visibility(
+                    visible: updateProfileScreen.updateProgress == false,
+                    replacement:
+                        const Center(child: CupertinoActivityIndicator()),
+                    child: CustomButton(
+                      onPresse: () {
+                        updateProfileScreen
+                            .updateProfile(
+                                _emailController.text.trim(),
+                                _firstNameController.text.trim(),
+                                _lastNameController.text.trim(),
+                                _phoneNumberController.text.trim(),
+                                _passwordController.text)
+                            .then((value) {
+                          if (value == true) {
+                            _emailController.clear();
+                            _firstNameController.clear();
+                            _lastNameController.clear();
+                            _phoneNumberController.clear();
+                            _passwordController.clear();
+                            Get.snackbar(
+                                "Success", "Profile update successfull");
+                          } else {
+                            Get.snackbar("failed", "Profile update failed");
+                          }
+                        });
+                      },
+                    ),
+                  );
+                }),
               ],
             ),
           ),
