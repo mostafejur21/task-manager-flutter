@@ -1,9 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:task_manager_flutter/data/models/auth_utility.dart';
-import 'package:task_manager_flutter/data/models/login_model.dart';
-import 'package:task_manager_flutter/data/models/network_response.dart';
-import 'package:task_manager_flutter/data/services/network_caller.dart';
-import 'package:task_manager_flutter/data/utils/api_links.dart';
 import 'package:task_manager_flutter/ui/screens/auth_screens/email_verification_screeen.dart';
 import 'package:task_manager_flutter/ui/screens/auth_screens/signup_form_screen.dart';
 import 'package:task_manager_flutter/ui/screens/bottom_navbar_screen.dart';
@@ -34,31 +30,35 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() {});
     }
-    Map<String, dynamic> requestBody = {
-      "email": _emailController.text.trim(),
-      "password": _passwordController.text
-    };
-    final NetworkResponse response =
-        await NetworkCaller().postRequest(ApiLinks.login, requestBody);
-    _loginInProgress = false;
-    if (mounted) {
-      setState(() {});
-    }
-    if (response.isSuccess) {
-      LoginModel model = LoginModel.fromJson(response.body!);
-      await AuthUtility.setUserInfo(model);
+
+    // login with firebase email and password
+    final _firebase = await FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: _emailController.text.trim(), password: _passwordController.text.trim());
+    if (_firebase.user != null) {
+      // show success message
+      _loginInProgress = false;
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const BottomNavBarScreen()),
-            (route) => false);
+        setState(() {});
       }
+      // navigate to home screen
+      Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const BottomNavBarScreen(),
+          ),
+          (route) => false);
     } else {
+      // show error message
+      _loginInProgress = false;
       if (mounted) {
-        _passwordController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Incorrect email or password')));
+        setState(() {});
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Login failed"),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -124,10 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: () {
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const EmailVarificationScreeen()));
+                          context, MaterialPageRoute(builder: (context) => const EmailVarificationScreeen()));
                     },
                     child: const Text(
                       "Forget Password?",
@@ -141,8 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPresse: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignUpFormScreen()),
+                        MaterialPageRoute(builder: (context) => const SignUpFormScreen()),
                       );
                     },
                     buttonText: 'Sign Up',
